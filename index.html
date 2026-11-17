@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff">
+<title>Касса и терминал</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧾%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f6fb;--panel:#fff;--ink:#0f172a;--mute:#64748b;--line:#e5e9f2;--acc:#3b82f6;--acc-soft:#e8f0fe;--ok:#16a34a;--ok-soft:#e7f8ee;--bad:#ef4444;--bad-soft:#fdecec;--sum:#d97706;--sum-soft:#fff4dc;--r:16px}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0)}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 16px 0;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.logo{width:36px;height:36px;border-radius:11px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.brand small{display:block;color:var(--mute);font-size:12px}
+nav{display:flex;gap:4px}
+nav button{flex:1;border:0;background:none;padding:11px 8px;font:inherit;font-weight:600;color:var(--mute);border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:var(--acc);border-color:var(--acc)}
+main{flex:1;overflow:auto;padding:16px;max-width:1000px;width:100%;margin:0 auto}
+section{display:none}section.on{display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+h2{font-size:15px;font-weight:700;margin-bottom:12px}
+.grid{display:grid;gap:16px}
+@media(min-width:800px){.pos{grid-template-columns:1.3fr 1fr;align-items:start}}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border:0}
+.item b{font-weight:600}.item span{color:var(--mute);font-size:14px}
+.add{width:40px;height:40px;border-radius:12px;border:0;background:var(--acc-soft);color:var(--acc);font-size:22px;font-weight:600;cursor:pointer}
+.add:active{transform:scale(.94)}
+.line{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.line .n{flex:1;min-width:0}.line .n small{display:block;color:var(--mute)}
+.q{display:flex;align-items:center;gap:6px}
+.q button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:16px;cursor:pointer}
+.q button.del{color:var(--bad);border-color:var(--bad-soft);background:var(--bad-soft)}
+.empty{color:var(--mute);text-align:center;padding:22px 0;font-size:14px}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 4px}
+.total .v{font-size:30px;font-weight:800;color:var(--sum);letter-spacing:-.02em}
+.cnt{color:var(--mute);font-size:13px;margin-bottom:12px}
+.btn{width:100%;border:0;border-radius:14px;padding:15px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;background:var(--acc);color:#fff}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}.btn.ghost{background:var(--acc-soft);color:var(--acc)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:5px 11px;border-radius:99px;background:var(--bad-soft);color:var(--bad)}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.chip.on{background:var(--ok-soft);color:var(--ok)}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.term{max-width:440px;margin:0 auto;text-align:center}
+.screen{border-radius:22px;padding:28px 18px;background:var(--panel);border:1px solid var(--line);margin-bottom:14px;min-height:200px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px}
+.screen .ic{font-size:44px}.screen .t{font-size:20px;font-weight:700}.screen .s{color:var(--mute);font-size:14px}
+.screen .big{font-size:46px;font-weight:800;color:var(--sum);background:var(--sum-soft);padding:6px 20px;border-radius:16px;letter-spacing:-.02em}
+.screen.ok{background:var(--ok-soft);border-color:#bfe9cf}.screen.bad{background:var(--bad-soft);border-color:#f7c9c9}
+.row{display:flex;gap:10px}.row .btn{flex:1}
+label{display:block;text-align:left;font-size:13px;font-weight:600;color:var(--mute);margin:0 0 6px}
+input{width:100%;font:inherit;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);margin-bottom:12px}
+input:focus{outline:2px solid var(--acc);outline-offset:1px;border-color:var(--acc)}
+.hint{color:var(--mute);font-size:13px;margin:-4px 0 14px;text-align:left}
+footer{background:var(--panel);border-top:1px solid var(--line);padding:9px 16px calc(9px + env(safe-area-inset-bottom,0));font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+footer b{color:var(--ink);font-weight:600;margin-right:8px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo" id="logo">М</div><div><h1 id="shopName">Мой магазин</h1><small>Касса и терминал оплаты</small></div></div>
+  <nav>
+    <button data-tab="kassa">Касса</button>
+    <button data-tab="terminal">Терминал</button>
+    <button data-tab="settings">Настройки</button>
+  </nav>
+</header>
+
+<main>
+<section id="tab-kassa">
+  <div class="bar"><span class="chip" id="termChip">Терминал не подключён</span><small style="color:var(--mute)" id="kassaId"></small></div>
+  <div class="grid pos">
+    <div class="card"><h2>Товары</h2><div id="products"></div></div>
+    <div class="card"><h2>Корзина</h2>
+      <div id="cart"></div>
+      <div class="total"><span>Итого</span><span class="v" id="sum">0 ₽</span></div>
+      <div class="cnt" id="cnt">Товаров: 0</div>
+      <button class="btn" id="payBtn" disabled>Оплатить</button>
+    </div>
+  </div>
+</section>
+
+<section id="tab-terminal">
+  <div class="term">
+    <div class="screen" id="screen"></div>
+    <div id="connectBox">
+      <label for="tid">ID кассы</label>
+      <input id="tid" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="btn" id="connBtn">Подключиться к кассе</button>
+    </div>
+    <div class="row" id="payBox" hidden>
+      <button class="btn ok" id="okBtn">✅ Оплатить</button>
+      <button class="btn bad" id="noBtn">❌ Отмена</button>
+    </div>
+  </div>
+</section>
+
+<section id="tab-settings">
+  <div class="card" style="max-width:480px;margin:0 auto">
+    <h2>Настройки магазина</h2>
+    <label for="sName">Название магазина</label>
+    <input id="sName" maxlength="40">
+    <label for="sId">ID кассы</label>
+    <input id="sId" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40">
+    <div class="hint">Если ID занят другим человеком, придумайте свой, например shop-ivan-77. Тот же ID вводится на терминале.</div>
+    <label for="sCur">Валюта</label>
+    <input id="sCur" maxlength="4">
+    <button class="btn" id="saveBtn">Сохранить</button>
+  </div>
+</section>
+</main>
+
+<footer><b id="logTime">--:--:--</b><span id="logText">Готово к работе</span></footer>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const DEF={name:'Мой магазин',id:'kassa-demo-1',cur:'₽'};
+let cfg=Object.assign({},DEF);
+try{Object.assign(cfg,JSON.parse(localStorage.getItem('kassa-cfg')||'{}'))}catch(e){}
+const PRODUCTS=[
+  {id:1,name:'Кофе американо',price:150},
+  {id:2,name:'Капучино',price:210},
+  {id:3,name:'Чай с лимоном',price:120},
+  {id:4,name:'Круассан',price:140},
+  {id:5,name:'Чизкейк',price:260},
+  {id:6,name:'Бутылка воды',price:70}
+];
+const fmt=n=>n.toLocaleString('ru-RU')+' '+cfg.cur;
+function log(t){const d=new Date();$('#logTime').textContent=d.toLocaleTimeString('ru-RU');$('#logText').textContent=t}
+
+function applyCfg(){
+  $('#shopName').textContent=cfg.name;
+  $('#logo').textContent=(cfg.name.trim()[0]||'М').toUpperCase();
+  document.title=cfg.name+' — касса';
+  $('#kassaId').textContent='ID кассы: '+cfg.id;
+  $('#tid').value=cfg.id;
+  $('#sName').value=cfg.name;$('#sId').value=cfg.id;$('#sCur').value=cfg.cur;
+  renderProducts();renderCart();
+}
+
+/* Вкладки */
+function tab(name){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='tab-'+name));
+  if(name==='kassa')startKassa();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+
+/* Корзина */
+const cart={};let waiting=false;
+function renderProducts(){
+  $('#products').innerHTML='';
+  PRODUCTS.forEach(p=>{
+    const d=document.createElement('div');d.className='item';
+    d.innerHTML='<div><b></b><br><span></span></div><button class="add" aria-label="Добавить">+</button>';
+    d.querySelector('b').textContent=p.name;d.querySelector('span').textContent=fmt(p.price);
+    d.querySelector('button').onclick=()=>{if(waiting)return;cart[p.id]=(cart[p.id]||0)+1;renderCart()};
+    $('#products').appendChild(d);
+  });
+}
+function totals(){let s=0,c=0;PRODUCTS.forEach(p=>{const q=cart[p.id]||0;s+=q*p.price;c+=q});return{s,c}}
+function renderCart(){
+  const box=$('#cart');box.innerHTML='';
+  const items=PRODUCTS.filter(p=>cart[p.id]);
+  if(!items.length)box.innerHTML='<div class="empty">Корзина пуста. Добавьте товары слева.</div>';
+  items.forEach(p=>{
+    const l=document.createElement('div');l.className='line';
+    l.innerHTML='<div class="n"><b></b><small></small></div><div class="q"><button data-a="m">−</button><span></span><button data-a="p">+</button><button class="del" data-a="d" aria-label="Удалить">✕</button></div>';
+    l.querySelector('b').textContent=p.name;
+    l.querySelector('small').textContent=fmt(p.price)+' × '+cart[p.id]+' = '+fmt(p.price*cart[p.id]);
+    l.querySelector('.q span').textContent=cart[p.id];
+    l.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      if(waiting)return;
+      const a=b.dataset.a;
+      if(a==='p')cart[p.id]++;
+      if(a==='m'&&--cart[p.id]<=0)delete cart[p.id];
+      if(a==='d')delete cart[p.id];
+      renderCart();
+    });
+    box.appendChild(l);
+  });
+  const t=totals();
+  $('#sum').textContent=fmt(t.s);$('#cnt').textContent='Товаров: '+t.c;
+  updatePay();
+}
+function updatePay(){
+  const b=$('#payBtn'),t=totals();
+  b.disabled=waiting||!t.c||!termConn;
+  b.textContent=waiting?'Ожидание оплаты на терминале…':'Оплатить';
+}
+
+/* Касса: приём соединения */
+let kp=null,kc=null,termConn=false;
+function setTerm(on){
+  termConn=on;
+  const c=$('#termChip');c.classList.toggle('on',on);
+  c.textContent=on?'Терминал подключён':'Терминал не подключён';
+  if(!on)waiting=false;
+  updatePay();
+}
+function startKassa(){
+  if(kp||typeof Peer==='undefined'){if(typeof Peer==='undefined')log('PeerJS не загружен: проверьте интернет');return}
+  kp=new Peer(cfg.id);
+  kp.on('open',id=>log('Касса зарегистрирована: '+id));
+  kp.on('connection',c=>{
+    if(kc&&kc.open){c.on('open',()=>c.close());log('Второй терминал отклонён');return}
+    kc=c;
+    const ready=()=>{setTerm(true);log('Терминал подключился');c.send({type:'hello',store:cfg.name})};
+    c.on('open',ready);
+    c.on('data',m=>{
+      if(!m||!m.type)return;
+      if(m.type==='success'){
+        waiting=false;log('Оплата прошла: '+fmt(m.sum));
+        for(const k in cart)delete cart[k];renderCart();alert('Оплата прошла');
+      }else if(m.type==='declined'){
+        waiting=false;log('Оплата отклонена');updatePay();alert('Оплата отклонена');
+      }
+    });
+    c.on('close',()=>{setTerm(false);log('Терминал отключился');renderCart()});
+    c.on('error',e=>log('Ошибка соединения: '+e.type));
+  });
+  kp.on('disconnected',()=>{log('Потеряна связь с сервером сигналинга, переподключение…');try{kp.reconnect()}catch(e){}});
+  kp.on('error',e=>{
+    if(e.type==='unavailable-id'){log('ID «'+cfg.id+'» занят. Задайте другой в настройках');kp.destroy();kp=null}
+    else if(e.type==='network')log('Сетевая ошибка: нет связи с сервером PeerJS');
+    else log('Ошибка: '+e.type);
+  });
+}
+$('#payBtn').onclick=()=>{
+  const t=totals();if(!t.c||!kc||!kc.open)return;
+  kc.send({type:'pay',sum:t.s});waiting=true;updatePay();log('Ожидание оплаты: '+fmt(t.s));
+};
+
+/* Терминал */
+let tp=null,tc=null,curSum=0,connTimer=null,tstate='idle';
+function screen(state,o){
+  o=o||{};tstate=state;
+  const sc=$('#screen');sc.className='screen'+(state==='done'?' ok':state==='fail'?' bad':'');
+  const map={
+    idle:['📡','Ожидание подключения','Введите ID кассы и подключитесь'],
+    connecting:['⏳','Подключение…','Ищем кассу «'+(o.id||'')+'»'],
+    ready:['✅','Терминал готов',(o.store?o.store+'. ':'')+'Ждём оплату с кассы'],
+    done:['💚','Оплачено','Сумма '+fmt(o.sum||0)],
+    fail:['✖️','Отклонено','Сумма '+fmt(o.sum||0)]
+  };
+  if(state==='pay'){
+    sc.innerHTML='<div class="ic">💳</div><div class="t">Ожидание карты</div><div class="big"></div><div class="s"></div>';
+    sc.querySelector('.big').textContent=fmt(o.sum);sc.querySelector('.s').textContent=o.store||'';
+  }else{
+    const m=map[state];sc.innerHTML='<div class="ic">'+m[0]+'</div><div class="t"></div><div class="s"></div>';
+    sc.querySelector('.t').textContent=m[1];sc.querySelector('.s').textContent=m[2];
+  }
+  $('#connectBox').hidden=!(state==='idle'||state==='connecting');
+  $('#payBox').hidden=state!=='pay';
+  $('#connBtn').disabled=state==='connecting';
+}
+let storeName='';
+function connect(){
+  const id=$('#tid').value.trim()||cfg.id;
+  if(typeof Peer==='undefined'){log('PeerJS не загружен: проверьте интернет');return}
+  screen('connecting',{id});log('Подключение к кассе «'+id+'»…');
+  if(tp){try{tp.destroy()}catch(e){}}
+  clearTimeout(connTimer);
+  const fail=t=>{clearTimeout(connTimer);log(t);screen('idle')};
+  connTimer=setTimeout(()=>{try{tp.destroy()}catch(e){}fail('Касса не отвечает. Откройте вкладку «Касса» на ПК')},12000);
+  tp=new Peer();
+  tp.on('open',()=>{
+    tc=tp.connect(id,{reliable:true});
+    tc.on('open',()=>{clearTimeout(connTimer);log('Подключено к кассе');screen('ready',{store:storeName})});
+    tc.on('data',m=>{
+      if(!m||!m.type)return;
+      if(m.type==='hello'){storeName=m.store||'';if(tstate==='ready')screen('ready',{store:storeName})}
+      if(m.type==='pay'){curSum=m.sum;log('Запрос оплаты: '+fmt(m.sum));screen('pay',{sum:m.sum,store:storeName})}
+    });
+    tc.on('close',()=>{log('Связь с кассой потеряна');screen('idle')});
+    tc.on('error',e=>log('Ошибка соединения: '+e.type));
+  });
+  tp.on('disconnected',()=>log('Потеряна связь с сервером сигналинга'));
+  tp.on('error',e=>{
+    if(e.type==='peer-unavailable')fail('Касса с таким ID не найдена');
+    else if(e.type==='network')fail('Сетевая ошибка: нет связи с сервером PeerJS');
+    else fail('Ошибка: '+e.type);
+  });
+}
+function answer(type){
+  if(!tc||!tc.open)return;
+  tc.send({type,sum:curSum});
+  screen(type==='success'?'done':'fail',{sum:curSum});
+  log(type==='success'?'Оплачено':'Отклонено');
+  setTimeout(()=>{if(tc&&tc.open)screen('ready',{store:storeName})},2000);
+}
+$('#connBtn').onclick=connect;
+$('#okBtn').onclick=()=>answer('success');
+$('#noBtn').onclick=()=>answer('declined');
+
+/* Настройки */
+$('#saveBtn').onclick=()=>{
+  const n={name:$('#sName').value.trim()||DEF.name,id:$('#sId').value.trim().replace(/[^\w-]/g,'')||DEF.id,cur:$('#sCur').value.trim()||DEF.cur};
+  const idChanged=n.id!==cfg.id;
+  cfg=n;
+  try{localStorage.setItem('kassa-cfg',JSON.stringify(cfg))}catch(e){}
+  applyCfg();
+  if(idChanged&&kp){try{kp.destroy()}catch(e){}kp=null;kc=null;setTerm(false)}
+  if(kc&&kc.open)kc.send({type:'hello',store:cfg.name});
+  log('Настройки сохранены');
+  tab('kassa');
+};
+
+applyCfg();screen('idle');
+tab(matchMedia('(max-width:700px)').matches?'terminal':'kassa');
+})();
+</script>
+</body>
+</html>
